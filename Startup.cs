@@ -35,53 +35,47 @@ namespace KeycloakWebapi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "KeycloakWebapi", Version = "v1" });
             });
 
+            services.AddAuthentication(options => 
+            {
+               options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+               options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(o =>
+            {
+                 o.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                 {
+                     ValidAudiences = new string[] { "springboot-api", "Demo-Realm", "account" }
+                 };
+                 o.Authority = Configuration["Jwt:Authority"];
+                 o.Audience = Configuration["Jwt:Audience"];
 
-            // services.AddAuthorization(options =>
-            //   {
-            //       options.AddPolicy("user", policy => policy.RequireRole("user"));
-            //   });
+                 o.RequireHttpsMetadata = false;
+                 o.Events = new JwtBearerEvents()
+                 {
+                     OnAuthenticationFailed = c =>
+                     {
+                         c.NoResult();
 
-            services.AddAuthentication(options =>
-                   {
-                       options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                       options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                   }).AddJwtBearer(o =>
-                   {
-                       o.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                       {
-                           ValidAudiences = new string[] { "springboot-api", "Demo-Realm", "account" }
-                       };
-                       o.Authority = Configuration["Jwt:Authority"];
-                       o.Audience = Configuration["Jwt:Audience"];
-
-                       o.RequireHttpsMetadata = false;
-                       o.Events = new JwtBearerEvents()
-                       {
-                           OnAuthenticationFailed = c =>
-                           {
-                               c.NoResult();
-
-                               c.Response.StatusCode = 500;
-                               c.Response.ContentType = "text/plain";
-                               if (environment.IsDevelopment())
-                               {
-                                   return c.Response.WriteAsync(c.Exception.ToString());
-                               }
-                               return c.Response.WriteAsync("An error occured processing your authentication.");
-                           }
-                       };
-                   });
+                         c.Response.StatusCode = 500;
+                         c.Response.ContentType = "text/plain";
+                         if (environment.IsDevelopment())
+                         {
+                             return c.Response.WriteAsync(c.Exception.ToString());
+                         }
+                         return c.Response.WriteAsync("An error occured processing your authentication.");
+                     }
+                 };
+            });
             services.AddAuthorization(options =>
-    {
-        options.AddPolicy("User", policy => policy.RequireClaim("user_roles", "user"));
-    });
+            {
+                options.AddPolicy("User", policy => policy.RequireClaim("user_roles", "user"));
+                options.AddPolicy("Admin", policy => policy.RequireClaim("user_roles", "admin"));
+            });
 
         }
 
