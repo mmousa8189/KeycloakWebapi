@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace KeycloakWebapi.Controllers
 {
+
     [ApiController]
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
@@ -24,8 +25,7 @@ namespace KeycloakWebapi.Controllers
             _logger = logger;
         }
 
-        [Authorize]
-        //[Authorize(Roles = "admin")]
+        [Authorize("User")]
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {

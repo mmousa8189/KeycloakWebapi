@@ -35,48 +35,52 @@ namespace KeycloakWebapi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "KeycloakWebapi", Version = "v1" });
             });
 
-            services.AddAuthentication(options => 
+            services.AddAuthentication(options =>
             {
-               options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-               options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             }).AddJwtBearer(o =>
             {
-                 o.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                 {
-                     ValidAudiences = new string[] { "springboot-api", "Demo-Realm", "account" }
-                 };
-                 o.Authority = Configuration["Jwt:Authority"];
-                 o.Audience = Configuration["Jwt:Audience"];
+                o.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                {
+                    ValidAudiences = new string[] { "springboot-api", "Demo-Realm", "account" }
+                };
+                o.Authority = Configuration["Jwt:Authority"];
+                o.Audience = Configuration["Jwt:Audience"];
 
-                 o.RequireHttpsMetadata = false;
-                 o.Events = new JwtBearerEvents()
-                 {
-                     OnAuthenticationFailed = c =>
-                     {
-                         c.NoResult();
+                o.RequireHttpsMetadata = false;
+                o.Events = new JwtBearerEvents()
+                {
+                    OnAuthenticationFailed = c =>
+                    {
+                        c.NoResult();
 
-                         c.Response.StatusCode = 500;
-                         c.Response.ContentType = "text/plain";
-                         if (environment.IsDevelopment())
-                         {
-                             return c.Response.WriteAsync(c.Exception.ToString());
-                         }
-                         return c.Response.WriteAsync("An error occured processing your authentication.");
-                     }
-                 };
+                        c.Response.StatusCode = 500;
+                        c.Response.ContentType = "text/plain";
+                        if (environment.IsDevelopment())
+                        {
+                            return c.Response.WriteAsync(c.Exception.ToString());
+                        }
+                        return c.Response.WriteAsync("An error occured processing your authentication.");
+                    }
+                };
             });
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("User", policy => policy.RequireClaim("user_roles", "user"));
-                options.AddPolicy("Admin", policy => policy.RequireClaim("user_roles", "admin"));
+                //options.AddPolicy("Admin", policy => policy.RequireClaim("user_roles", "admin"));
             });
-
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAnyCorsPolicy", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -94,7 +98,7 @@ namespace KeycloakWebapi
             app.UseRouting();
             app.UseAuthentication(); // added
             app.UseAuthorization();
-
+            app.UseCors("AllowAnyCorsPolicy"); // allow credentials
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

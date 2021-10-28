@@ -15,13 +15,13 @@ namespace KeycloakWebapi.Controllers
         [HttpGet("anonymous")]
         public IActionResult GetAnonymous() => Ok("Hello Anonymous");
 
-        [Authorize(Roles = "User")]
+        [Authorize("User")]
         [HttpGet("user")]
         public IActionResult GetUser() => Ok("Hello User");
-        [Authorize(Roles = "User")]
+        [Authorize("User")]
         [HttpGet("admin")]
         public IActionResult GetAdmin() => Ok("Hello Admin");
-        [Authorize(Roles = "User,Admin")]
+        [Authorize("User,Admin")]
         [HttpGet("all-user")]
         public IActionResult GetAllUser() => Ok("Hello All User");
     }
